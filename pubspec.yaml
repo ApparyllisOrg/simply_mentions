@@ -1,7 +1,7 @@
 name: simply_mentions
-description: A new Flutter package project.
-version: 0.0.1
-homepage: https://dart.dev/tools/pub/pubspec
+description: Support mentioning in your project with all the features you need
+version: 1.0.1
+homepage: https://github.com/ApparyllisOrg/simply_mentions
 
 environment:
   sdk: ">=3.0.6 <4.0.0"
@@ -20,3 +20,11 @@ dev_dependencies:
   flutter_lints: ^2.0.0
 
 flutter:
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:

@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+
+// ignore_for_file: constant_identifier_names
 
 // Mention object that store the id, display name and avatarurl of the mention
 // You can inherit from this to add your own custom data, should you need to
 
 // Keep in copy with diff.dart from diff_match_patch package
+
 const DIFF_DELETE = 1;
 const DIFF_INSERT = -1;
 const DIFF_EQUAL = 0;
