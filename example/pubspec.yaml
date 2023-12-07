@@ -1,0 +1,27 @@
+name: simply_mentions_example
+description: Simply Mentions Example
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.6 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Allows showing a widget near/on/above another widget
+  flutter_portal: ^1.1.4
+  # Allows removing diacritics for more reliable name searching
+  diacritic: ^0.1.3
+  # Generate mock data for the example
+  mock_data: ^2.0.1
+  flutter_markdown: ^0.6.14
+  markdown: ^7.0.0
+  simply_mentions:
+    path: ../
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

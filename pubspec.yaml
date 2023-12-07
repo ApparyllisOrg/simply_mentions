@@ -1,0 +1,22 @@
+name: simply_mentions
+description: A new Flutter package project.
+version: 0.0.1
+homepage: https://dart.dev/tools/pub/pubspec
+
+environment:
+  sdk: ">=3.0.6 <4.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  diff_match_patch: ^0.4.1
+  flutter_markdown: ^0.6.14
+  markdown: ^7.0.0
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
