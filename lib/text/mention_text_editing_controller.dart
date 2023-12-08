@@ -182,9 +182,7 @@ class MentionTextEditingController extends TextEditingController {
 
   TextSpan _createSpanForNonMatchingRange(
       int start, int end, BuildContext context) {
-    return TextSpan(
-        text: text.substring(start, end),
-        style: Theme.of(context).textTheme.button);
+    return TextSpan(text: text.substring(start, end));
   }
 
   // Get the current search string for the mention (this is the mention minus the starting character. i.e. @Amber -> Amber)
