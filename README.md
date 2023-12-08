@@ -376,4 +376,4 @@ You can submit a pull request into the main branch. Please elaborate why the cha
 
 ## 📜 License 
 
-This project is licensed under GLPv3
+This project is licensed under BDS-3-Clause

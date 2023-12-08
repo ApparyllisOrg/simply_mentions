@@ -7,3 +7,6 @@
 ## 1.0.2
 * Update License
 * Fix static analysis
+
+## 1.0.3
+* Update README
