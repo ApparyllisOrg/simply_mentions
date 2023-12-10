@@ -1,6 +1,6 @@
 name: simply_mentions
 description: Support mentioning in your project with all the features you need
-version: 1.0.3
+version: 1.0.4
 homepage: https://github.com/ApparyllisOrg/simply_mentions
 
 environment:

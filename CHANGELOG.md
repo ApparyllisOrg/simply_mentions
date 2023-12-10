@@ -10,3 +10,6 @@
 
 ## 1.0.3
 * Update README
+
+## 1.0.4
+* Fix issue where setting markup texts could cause an out of range exception
