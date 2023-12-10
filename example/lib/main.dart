@@ -67,6 +67,7 @@ class _ExampleState extends State<Example> {
           mentionSyntaxes: [DocumentMentionEditableSyntax(context)],
           mentionBgColor: Theme.of(context).colorScheme.primary,
           mentionTextColor: Theme.of(context).colorScheme.onPrimary,
+          runTextStyle: TextStyle(color: Colors.white),
           mentionTextStyle: TextStyle(),
           onSugggestionChanged: onSuggestionChanged,
           idToMentionObject: (BuildContext context, String id) =>
@@ -98,7 +99,7 @@ class _ExampleState extends State<Example> {
 
   // Create any widget of your choosing to make a list of possible mentions using the search string
   Widget getMentions() {
-    if (mentionTextEditingController!.isMentioning()) {
+    if (!mentionTextEditingController!.isMentioning()) {
       return SizedBox.shrink();
     }
 

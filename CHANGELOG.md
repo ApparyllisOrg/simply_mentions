@@ -16,3 +16,7 @@
 
 ## 1.0.5
 * Fix issue where it wouldn't find mentions past the first position
+
+## 1.0.6
+* Expose run text style
+* Fix issue where deleting more than one character would not correctly detect if a mention should stop

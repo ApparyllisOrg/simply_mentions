@@ -56,6 +56,7 @@ MentionTextEditingController mentionTextEditingController = MentionTextEditingCo
     mentionBgColor: Theme.of(context).colorScheme.primary,
     mentionTextColor: Theme.of(context).colorScheme.onPrimary,
     mentionTextStyle: TextStyle(),
+    runTextStyle: TextStyle(),
     onSugggestionChanged: onSuggestionChanged,
     idToMentionObject: (BuildContext context, String id) =>
         documentMentions.firstWhere((element) => element.id == id));

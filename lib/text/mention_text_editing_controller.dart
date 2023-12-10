@@ -81,6 +81,7 @@ class MentionTextEditingController extends TextEditingController {
     required this.mentionBgColor,
     required this.mentionTextColor,
     required this.mentionTextStyle,
+    required this.runTextStyle,
     required this.idToMentionObject,
     super.text,
   }) {
@@ -109,6 +110,9 @@ class MentionTextEditingController extends TextEditingController {
 
   // Text style for the mention
   final TextStyle mentionTextStyle;
+
+  // Text style for normal non-mention text
+  final TextStyle runTextStyle;
 
   String _previousText = '';
 
@@ -183,7 +187,7 @@ class MentionTextEditingController extends TextEditingController {
 
   TextSpan _createSpanForNonMatchingRange(
       int start, int end, BuildContext context) {
-    return TextSpan(text: text.substring(start, end));
+    return TextSpan(text: text.substring(start, end), style: runTextStyle);
   }
 
   // Get the current search string for the mention (this is the mention minus the starting character. i.e. @Amber -> Amber)
@@ -385,7 +389,10 @@ class MentionTextEditingController extends TextEditingController {
       if (difference.operation == DIFF_DELETE) {
         if (isMentioning()) {
           // If we removed our startingCharacter, chancel mentioning
-          if (difference.text == _mentionSyntax!.startingCharacter) {
+          // TODO: This detects if *ANY* character contains our mention character, which isn't ideal.. 
+          // But I have not yet figured out how to get whether we are currently deleting our starting character.. 
+          // We can, however, find out if we are deleting our starting character AFTER our mention start so that names with the starting character don't cancel mentioning when backspacing
+          if (difference.text.contains(_mentionSyntax!.startingCharacter) && currentTextIndex <= _mentionStartingIndex!) {
             cancelMentioning();
           } else {
             if (currentTextIndex < _mentionStartingIndex!) {
