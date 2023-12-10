@@ -138,7 +138,8 @@ class MentionTextEditingController extends TextEditingController {
         if (character == syntax.prefix[0]) {
           final String subStr = markupText.substring(i, markupText.length);
           final RegExpMatch? match = syntax.getRegExp().firstMatch(subStr);
-          if (match != null && match.start == i) {
+          // Ensure the match starts at the start of our substring
+          if (match != null && match.start == 0) {
             deconstructedText += markupText.substring(lastStartingRunStart, i);
 
             final String matchedMarkup =

@@ -13,3 +13,6 @@
 
 ## 1.0.4
 * Fix issue where setting markup texts could cause an out of range exception
+
+## 1.0.5
+* Fix issue where it wouldn't find mentions past the first position
