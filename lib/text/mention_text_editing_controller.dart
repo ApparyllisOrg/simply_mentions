@@ -434,6 +434,13 @@ class MentionTextEditingController extends TextEditingController {
       for (int x = _cachedMentions.length - 1; x >= 0; --x) {
         final _TextMention mention = _cachedMentions[x];
 
+        // Not overlapping but we inserted text in front of metions so we need to shift them
+        if (mention.start >= currentTextIndex &&
+            difference.operation == DIFF_INSERT) {
+          mention.start += difference.text.length;
+          mention.end += difference.text.length;
+        }
+
         // Check for overlaps
         if (!bGuardDeletion) {
           if (difference.operation != DIFF_EQUAL) {
@@ -444,12 +451,6 @@ class MentionTextEditingController extends TextEditingController {
           }
         }
 
-        // Not overlapping but we inserted text in front of metions so we need to shift them
-        if (mention.start >= currentTextIndex &&
-            difference.operation == DIFF_INSERT) {
-          mention.start += difference.text.length;
-          mention.end += difference.text.length;
-        }
         // Not overlapping but we removed text in front of metions so we need to shift them
         if (mention.start >= currentTextIndex &&
             difference.operation == DIFF_DELETE) {
