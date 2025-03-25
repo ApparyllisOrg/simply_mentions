@@ -18,14 +18,14 @@ class MentionObject {
   MentionObject(
       {required this.id, required this.displayName, required this.avatarUrl});
 
-  // id of the mention, should match ^([a-zA-Z0-9]){1,}$
+  /// id of the mention, should match ^([a-zA-Z0-9]){1,}$
   final String id;
   final String displayName;
   final String avatarUrl;
 }
 
-// Mention syntax for determining when to start mentioning and parsing to and from markup
-// Final markup text would be Prefix -> StartingCharacter -> Id of mention -> Suffix
+/// Mention syntax for determining when to start mentioning and parsing to and from markup
+/// Final markup text would be Prefix -> StartingCharacter -> Id of mention -> Suffix
 class MentionSyntax {
   MentionSyntax(
       {required this.startingCharacter,
@@ -36,19 +36,21 @@ class MentionSyntax {
     _mentionRegex = RegExp('($prefix)($startingCharacter)($pattern)($suffix)');
   }
 
-  // The character the regex pattern starts with, used to more performantly find sections in the text, needs to be a single character
+  /// The character the regex pattern starts with, used to more performantly
+  /// find sections in the text, needs to be a single character
   final String startingCharacter;
 
-  // The prefix to add to the final markup text per mention of this type
+  /// The prefix to add to the final markup text per mention of this type
   final String prefix;
 
-  // The suffix to add to the final markup text per mention of this type
+  /// The suffix to add to the final markup text per mention of this type
   final String suffix;
 
-  // The display name to show when the mention with the specified id no longer exists
+  /// The display name to show when the mention with the specified id
+  /// no longer exists
   final String missingText;
 
-  // The inner pattern that will be followed to find a mention
+  /// The inner pattern that will be followed to find a mention
   final String pattern;
 
   late RegExp _mentionRegex;
@@ -56,7 +58,7 @@ class MentionSyntax {
   RegExp getRegExp() => _mentionRegex;
 }
 
-// Local-only class to store mentions currently stored in the string visible to the user
+/// Local-only class to store mentions currently stored in the string visible to the user
 class _TextMention {
   _TextMention(
       {required this.id,
@@ -72,12 +74,12 @@ class _TextMention {
   int end;
 }
 
-// Text editing controller that can parse mentions
+/// Text editing controller that can parse mentions
 class MentionTextEditingController extends TextEditingController {
   MentionTextEditingController({
     this.controllerToCopyTo,
     required this.mentionSyntaxes,
-    this.onSugggestionChanged,
+    this.onSuggestionChanged,
     required this.mentionBgColor,
     required this.mentionTextColor,
     required this.mentionTextStyle,
@@ -88,30 +90,33 @@ class MentionTextEditingController extends TextEditingController {
     _init();
   }
 
-  // Unique mention syntaxes, all syntaxes should have a different starting character
+  /// Unique mention syntaxes, all syntaxes should have a different
+  /// starting character
   final List<MentionSyntax> mentionSyntaxes;
 
-  // Delegate called when suggestion has changed
-  Function(MentionSyntax? syntax, String?)? onSugggestionChanged;
+  /// Delegate called when suggestion has changed
+  Function(MentionSyntax? syntax, String?)? onSuggestionChanged;
 
-  // Function to get a mention from an id, used to deconstruct markup on construct
+  /// Function to get a mention from an id, used to deconstruct markup
+  /// on construct
   final MentionObject? Function(BuildContext, String) idToMentionObject;
 
-  // Background color of the text for the mention
+  /// Background color of the text for the mention
   final Color mentionBgColor;
 
-  // Color of the text for the mention
+  /// Color of the text for the mention
   final Color mentionTextColor;
 
-  // EditingController to copy our text to, used for things like the Autocorrect widget
+  /// EditingController to copy our text to, used for things like
+  /// the Autocorrect widget
   TextEditingController? controllerToCopyTo;
 
   final List<_TextMention> _cachedMentions = [];
 
-  // Text style for the mention
+  /// Text style for the mention
   final TextStyle mentionTextStyle;
 
-  // Text style for normal non-mention text
+  /// Text style for normal non-mention text
   final TextStyle runTextStyle;
 
   String _previousText = '';
@@ -127,7 +132,8 @@ class MentionTextEditingController extends TextEditingController {
     super.dispose();
   }
 
-  // Set markup text, this is used when you get data that has the mention syntax and you want to initialize the textfield with it.
+  /// Set markup text, this is used when you get data that has the mention
+  /// syntax and you want to initialize the [TextField] with it.
   void setMarkupText(BuildContext context, String markupText) {
     String deconstructedText = '';
 
@@ -190,7 +196,8 @@ class MentionTextEditingController extends TextEditingController {
     return TextSpan(text: text.substring(start, end), style: runTextStyle);
   }
 
-  // Get the current search string for the mention (this is the mention minus the starting character. i.e. @Amber -> Amber)
+  /// Get the current search string for the mention (this is the mention minus
+  /// the starting character. i.e. @Amber -> Amber)
   String getSearchText() {
     if (isMentioning()) {
       return text.substring(
@@ -200,12 +207,14 @@ class MentionTextEditingController extends TextEditingController {
     return '';
   }
 
-  // Get the current search syntax for the current mention. This is useful when you have multiple syntaxes
+  /// Get the current search syntax for the current mention.
+  /// This is useful when you have multiple syntaxes
   MentionSyntax? getSearchSyntax() {
     return _mentionSyntax;
   }
 
-  // Get the text in the format that is readable by syntaxes. This will contain all text + syntax mentions (i.e. <###@USERID###>)
+  /// Get the text in the format that is readable by syntaxes.
+  /// This will contain all text + syntax mentions (i.e. <###@USERID###>)
   String getMarkupText() {
     String finalString = '';
     int lastStartingRunStart = 0;
@@ -292,7 +301,7 @@ class MentionTextEditingController extends TextEditingController {
 
   bool bGuardDeletion = false;
 
-  // Insert a mention in the currently mentioning position
+  /// Insert a mention in the currently mentioning position
   void insertMention(MentionObject mention) {
     assert(isMentioning());
 
@@ -323,7 +332,7 @@ class MentionTextEditingController extends TextEditingController {
     _sortMentions();
   }
 
-  // Check if we are currently mentioning
+  /// Check if we are currently mentioning
   bool isMentioning() =>
       _mentionStartingIndex != null &&
       _mentionLength != null &&
@@ -335,14 +344,14 @@ class MentionTextEditingController extends TextEditingController {
     });
   }
 
-  // Cancel mentioning
+  /// Cancel mentioning
   void cancelMentioning() {
     _mentionStartingIndex = null;
     _mentionLength = null;
     _mentionSyntax = null;
 
-    if (onSugggestionChanged != null) {
-      onSugggestionChanged!(null, null);
+    if (onSuggestionChanged != null) {
+      onSuggestionChanged!(null, null);
     }
   }
 
@@ -363,8 +372,8 @@ class MentionTextEditingController extends TextEditingController {
             if (currentTextIndex <= _mentionStartingIndex! + _mentionLength! &&
                 currentTextIndex >= _mentionStartingIndex! + _mentionLength!) {
               _mentionLength = _mentionLength! + difference.text.length;
-              if (onSugggestionChanged != null) {
-                onSugggestionChanged!(
+              if (onSuggestionChanged != null) {
+                onSuggestionChanged!(
                     _mentionSyntax!,
                     text.substring(_mentionStartingIndex!,
                         _mentionStartingIndex! + _mentionLength!));
@@ -389,10 +398,11 @@ class MentionTextEditingController extends TextEditingController {
       if (difference.operation == DIFF_DELETE) {
         if (isMentioning()) {
           // If we removed our startingCharacter, chancel mentioning
-          // TODO: This detects if *ANY* character contains our mention character, which isn't ideal.. 
-          // But I have not yet figured out how to get whether we are currently deleting our starting character.. 
+          // TODO: This detects if *ANY* character contains our mention character, which isn't ideal..
+          // But I have not yet figured out how to get whether we are currently deleting our starting character..
           // We can, however, find out if we are deleting our starting character AFTER our mention start so that names with the starting character don't cancel mentioning when backspacing
-          if (difference.text.contains(_mentionSyntax!.startingCharacter) && currentTextIndex <= _mentionStartingIndex!) {
+          if (difference.text.contains(_mentionSyntax!.startingCharacter) &&
+              currentTextIndex <= _mentionStartingIndex!) {
             cancelMentioning();
           } else {
             if (currentTextIndex < _mentionStartingIndex!) {
@@ -408,12 +418,12 @@ class MentionTextEditingController extends TextEditingController {
 
             // If we no longer have text after our mention sign then hide suggestions until we start typing again
             if (_mentionLength == 1) {
-              if (onSugggestionChanged != null) {
-                onSugggestionChanged!(null, null);
+              if (onSuggestionChanged != null) {
+                onSuggestionChanged!(null, null);
               }
             } else {
-              if (onSugggestionChanged != null) {
-                onSugggestionChanged!(
+              if (onSuggestionChanged != null) {
+                onSuggestionChanged!(
                     _mentionSyntax!,
                     text.substring(_mentionStartingIndex!,
                         _mentionStartingIndex! + _mentionLength!));
@@ -434,7 +444,7 @@ class MentionTextEditingController extends TextEditingController {
       for (int x = _cachedMentions.length - 1; x >= 0; --x) {
         final _TextMention mention = _cachedMentions[x];
 
-        // Not overlapping but we inserted text in front of metions so we need to shift them
+        // Not overlapping but we inserted text in front of mentions so we need to shift them
         if (mention.start >= currentTextIndex &&
             difference.operation == DIFF_INSERT) {
           mention.start += difference.text.length;
@@ -451,7 +461,7 @@ class MentionTextEditingController extends TextEditingController {
           }
         }
 
-        // Not overlapping but we removed text in front of metions so we need to shift them
+        // Not overlapping but we removed text in front of mentions so we need to shift them
         if (mention.start >= currentTextIndex &&
             difference.operation == DIFF_DELETE) {
           mention.start -= difference.text.length;

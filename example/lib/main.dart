@@ -69,7 +69,7 @@ class _ExampleState extends State<Example> {
           mentionTextColor: Theme.of(context).colorScheme.onPrimary,
           runTextStyle: TextStyle(color: Colors.white),
           mentionTextStyle: TextStyle(),
-          onSugggestionChanged: onSuggestionChanged,
+          onSuggestionChanged: onSuggestionChanged,
           idToMentionObject: (BuildContext context, String id) =>
               documentMentions.firstWhere((element) => element.id == id));
 
