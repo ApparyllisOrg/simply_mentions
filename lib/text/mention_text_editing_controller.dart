@@ -15,25 +15,35 @@ const DIFF_INSERT = -1;
 const DIFF_EQUAL = 0;
 
 class MentionObject {
-  MentionObject(
-      {required this.id, required this.displayName, required this.avatarUrl});
+  const MentionObject({
+    required this.id,
+    required this.displayName,
+    this.avatarUrl,
+  });
 
   /// id of the mention, should match ^([a-zA-Z0-9]){1,}$
   final String id;
+
+  /// display name of the mention
   final String displayName;
-  final String avatarUrl;
+
+  /// avatar url of the mention
+  final String? avatarUrl;
 }
 
 /// Mention syntax for determining when to start mentioning and parsing to and from markup
 /// Final markup text would be Prefix -> StartingCharacter -> Id of mention -> Suffix
 class MentionSyntax {
-  MentionSyntax(
-      {required this.startingCharacter,
-      required this.missingText,
-      this.prefix = '<###',
-      this.suffix = '###>',
-      this.pattern = "[a-zA-Z0-9]{1,}"}) {
-    _mentionRegex = RegExp('($prefix)($startingCharacter)($pattern)($suffix)');
+  MentionSyntax({
+    required this.startingCharacter,
+    required this.missingText,
+    this.prefix = '<###',
+    this.suffix = '###>',
+    this.pattern = '[a-zA-Z0-9]{1,}',
+  }) {
+    _mentionRegex = RegExp(
+      '($prefix)($startingCharacter)($pattern)($suffix)',
+    );
   }
 
   /// The character the regex pattern starts with, used to more performantly
@@ -60,19 +70,41 @@ class MentionSyntax {
 
 /// Local-only class to store mentions currently stored in the string visible to the user
 class _TextMention {
-  _TextMention(
-      {required this.id,
-      required this.display,
-      required this.start,
-      required this.end,
-      required this.syntax});
+  _TextMention({
+    required this.id,
+    required this.display,
+    required this.start,
+    required this.end,
+    required this.syntax,
+  });
 
+  /// Id of the mention
   final String id;
+
+  /// Display name of the mention
   final String display;
+
+  /// Syntax of the mention
   final MentionSyntax syntax;
+
+  /// Start and end index of the mention
   int start;
+
+  /// Start and end index of the mention
   int end;
 }
+
+/// Callback to get a mention from an id.
+typedef IdToMentionCallback = MentionObject? Function(
+  BuildContext context,
+  String text,
+);
+
+/// Callback to notify when suggestion has changed.
+typedef SuggestionChangedCallback = void Function(
+  MentionSyntax? syntax,
+  String? fullSearchString,
+);
 
 /// Text editing controller that can parse mentions
 class MentionTextEditingController extends TextEditingController {
@@ -80,10 +112,7 @@ class MentionTextEditingController extends TextEditingController {
     this.controllerToCopyTo,
     required this.mentionSyntaxes,
     this.onSuggestionChanged,
-    required this.mentionBgColor,
-    required this.mentionTextColor,
     required this.mentionTextStyle,
-    required this.runTextStyle,
     required this.idToMentionObject,
     super.text,
   }) {
@@ -95,35 +124,25 @@ class MentionTextEditingController extends TextEditingController {
   final List<MentionSyntax> mentionSyntaxes;
 
   /// Delegate called when suggestion has changed
-  Function(MentionSyntax? syntax, String?)? onSuggestionChanged;
+  final SuggestionChangedCallback? onSuggestionChanged;
 
   /// Function to get a mention from an id, used to deconstruct markup
   /// on construct
-  final MentionObject? Function(BuildContext, String) idToMentionObject;
-
-  /// Background color of the text for the mention
-  final Color mentionBgColor;
-
-  /// Color of the text for the mention
-  final Color mentionTextColor;
+  final IdToMentionCallback idToMentionObject;
 
   /// EditingController to copy our text to, used for things like
   /// the Autocorrect widget
-  TextEditingController? controllerToCopyTo;
-
-  final List<_TextMention> _cachedMentions = [];
+  final TextEditingController? controllerToCopyTo;
 
   /// Text style for the mention
-  final TextStyle mentionTextStyle;
+  final TextStyle? mentionTextStyle;
 
-  /// Text style for normal non-mention text
-  final TextStyle runTextStyle;
-
+  final List<_TextMention> _cachedMentions = [];
   String _previousText = '';
-
+  MentionSyntax? _mentionSyntax;
   int? _mentionStartingIndex;
   int? _mentionLength;
-  MentionSyntax? _mentionSyntax;
+  bool bGuardDeletion = false;
 
   @override
   void dispose() {
@@ -135,45 +154,44 @@ class MentionTextEditingController extends TextEditingController {
   /// Set markup text, this is used when you get data that has the mention
   /// syntax and you want to initialize the [TextField] with it.
   void setMarkupText(BuildContext context, String markupText) {
-    String deconstructedText = '';
-
-    int lastStartingRunStart = 0;
-
     _cachedMentions.clear();
 
-    for (int i = 0; i < markupText.length; ++i) {
-      final String character = markupText[i];
+    String deconstructedText = '';
+    int lastStartingRunStart = 0;
 
-      for (final MentionSyntax syntax in mentionSyntaxes) {
+    for (int i = 0; i < markupText.length; ++i) {
+      final character = markupText[i];
+
+      for (final syntax in mentionSyntaxes) {
         if (character == syntax.prefix[0]) {
-          final String subStr = markupText.substring(i, markupText.length);
-          final RegExpMatch? match = syntax.getRegExp().firstMatch(subStr);
+          final subStr = markupText.substring(i, markupText.length);
+          final match = syntax.getRegExp().firstMatch(subStr);
           // Ensure the match starts at the start of our substring
           if (match != null && match.start == 0) {
             deconstructedText += markupText.substring(lastStartingRunStart, i);
 
-            final String matchedMarkup =
-                match.input.substring(match.start, match.end);
-            final String mentionId = match[3]!;
-            final MentionObject? mention =
-                idToMentionObject(context, mentionId);
+            final matchedMarkup = match.input.substring(match.start, match.end);
+            final mentionId = match[3]!;
+            final mention = idToMentionObject(context, mentionId);
 
-            final String mentionDisplayName =
+            final mentionDisplayName =
                 mention?.displayName ?? syntax.missingText;
 
-            final String insertText =
-                '${syntax.startingCharacter}$mentionDisplayName';
+            final insertText = '${syntax.startingCharacter}$mentionDisplayName';
 
-            final int indexToInsertMention = deconstructedText.length;
-            final int indexToEndInsertion =
+            final indexToInsertMention = deconstructedText.length;
+            final indexToEndInsertion =
                 indexToInsertMention + insertText.length;
 
-            _cachedMentions.add(_TextMention(
+            _cachedMentions.add(
+              _TextMention(
                 id: mentionId,
                 display: insertText,
                 start: indexToInsertMention,
                 end: indexToEndInsertion,
-                syntax: syntax));
+                syntax: syntax,
+              ),
+            );
 
             deconstructedText += insertText;
             lastStartingRunStart = i + matchedMarkup.length;
@@ -183,8 +201,10 @@ class MentionTextEditingController extends TextEditingController {
     }
 
     if (lastStartingRunStart != markupText.length) {
-      deconstructedText +=
-          markupText.substring(lastStartingRunStart, markupText.length);
+      deconstructedText += markupText.substring(
+        lastStartingRunStart,
+        markupText.length,
+      );
     }
 
     _previousText = deconstructedText;
@@ -192,8 +212,15 @@ class MentionTextEditingController extends TextEditingController {
   }
 
   TextSpan _createSpanForNonMatchingRange(
-      int start, int end, BuildContext context) {
-    return TextSpan(text: text.substring(start, end), style: runTextStyle);
+    BuildContext context, {
+    TextStyle? style,
+    required int start,
+    required int end,
+  }) {
+    return TextSpan(
+      text: text.substring(start, end),
+      style: style,
+    );
   }
 
   /// Get the current search string for the mention (this is the mention minus
@@ -201,7 +228,9 @@ class MentionTextEditingController extends TextEditingController {
   String getSearchText() {
     if (isMentioning()) {
       return text.substring(
-          _mentionStartingIndex! + 1, _mentionStartingIndex! + _mentionLength!);
+        _mentionStartingIndex! + 1,
+        _mentionStartingIndex! + _mentionLength!,
+      );
     }
 
     return '';
@@ -209,38 +238,46 @@ class MentionTextEditingController extends TextEditingController {
 
   /// Get the current search syntax for the current mention.
   /// This is useful when you have multiple syntaxes
-  MentionSyntax? getSearchSyntax() {
-    return _mentionSyntax;
-  }
+  MentionSyntax? getSearchSyntax() => _mentionSyntax;
 
   /// Get the text in the format that is readable by syntaxes.
   /// This will contain all text + syntax mentions (i.e. <###@USERID###>)
   String getMarkupText() {
-    String finalString = '';
+    final finalString = StringBuffer('');
     int lastStartingRunStart = 0;
 
     for (int i = 0; i < _cachedMentions.length; ++i) {
-      final _TextMention mention = _cachedMentions[i];
-
-      final int indexToEndRegular = mention.start;
+      final mention = _cachedMentions[i];
+      final indexToEndRegular = mention.start;
 
       if (indexToEndRegular != lastStartingRunStart) {
-        finalString += text.substring(lastStartingRunStart, indexToEndRegular);
+        finalString.write(
+          text.substring(
+            lastStartingRunStart,
+            indexToEndRegular,
+          ),
+        );
       }
 
-      final String markupString =
-          '${mention.syntax.prefix}${mention.syntax.startingCharacter}${mention.id}${mention.syntax.suffix}';
-
-      finalString += markupString;
-
+      finalString.write(
+        '${mention.syntax.prefix}'
+        '${mention.syntax.startingCharacter}'
+        '${mention.id}'
+        '${mention.syntax.suffix}',
+      );
       lastStartingRunStart = mention.end;
     }
 
     if (lastStartingRunStart < text.length) {
-      finalString += text.substring(lastStartingRunStart, text.length);
+      finalString.write(
+        text.substring(
+          lastStartingRunStart,
+          text.length,
+        ),
+      );
     }
 
-    return finalString;
+    return finalString.toString();
   }
 
   @override
@@ -249,30 +286,43 @@ class MentionTextEditingController extends TextEditingController {
     TextStyle? style,
     required bool withComposing,
   }) {
-    final List<InlineSpan> inlineSpans = [];
+    final inlineSpans = <InlineSpan>[];
     int lastStartingRunStart = 0;
 
     for (int i = 0; i < _cachedMentions.length; ++i) {
-      final _TextMention mention = _cachedMentions[i];
-
-      final int indexToEndRegular = mention.start;
+      final mention = _cachedMentions[i];
+      final indexToEndRegular = mention.start;
 
       if (indexToEndRegular != lastStartingRunStart) {
-        inlineSpans.add(_createSpanForNonMatchingRange(
-            lastStartingRunStart, indexToEndRegular, context));
+        inlineSpans.add(
+          _createSpanForNonMatchingRange(
+            context,
+            start: lastStartingRunStart,
+            end: indexToEndRegular,
+            style: style,
+          ),
+        );
       }
 
-      inlineSpans.add(TextSpan(
+      inlineSpans.add(
+        TextSpan(
           text: text.substring(mention.start, mention.end),
-          style: mentionTextStyle.copyWith(
-              backgroundColor: mentionBgColor, color: mentionTextColor)));
+          style: style?.merge(mentionTextStyle),
+        ),
+      );
 
       lastStartingRunStart = mention.end;
     }
 
     if (lastStartingRunStart < text.length) {
-      inlineSpans.add(_createSpanForNonMatchingRange(
-          lastStartingRunStart, text.length, context));
+      inlineSpans.add(
+        _createSpanForNonMatchingRange(
+          context,
+          start: lastStartingRunStart,
+          end: text.length,
+          style: style,
+        ),
+      );
     }
 
     return TextSpan(children: inlineSpans);
@@ -291,43 +341,45 @@ class MentionTextEditingController extends TextEditingController {
     }
 
     _processTextChange();
-
     _previousText = text;
-
-    if (controllerToCopyTo != null) {
-      controllerToCopyTo!.text = text;
-    }
+    controllerToCopyTo?.text = text;
   }
-
-  bool bGuardDeletion = false;
 
   /// Insert a mention in the currently mentioning position
   void insertMention(MentionObject mention) {
     assert(isMentioning());
 
-    final int mentionVisibleTextEnd =
+    final mentionVisibleTextEnd =
         _mentionStartingIndex! + mention.displayName.length + 1;
 
-    _cachedMentions.add(_TextMention(
+    _cachedMentions.add(
+      _TextMention(
         id: mention.id,
         display: mention.displayName,
         start: _mentionStartingIndex!,
         end: mentionVisibleTextEnd,
-        syntax: _mentionSyntax!));
+        syntax: _mentionSyntax!,
+      ),
+    );
 
-    final int mentionStart = _mentionStartingIndex!;
-    final int mentionEnd = _mentionStartingIndex! + _mentionLength!;
-    final String startChar = _mentionSyntax!.startingCharacter;
+    final mentionStart = _mentionStartingIndex!;
+    final mentionEnd = _mentionStartingIndex! + _mentionLength!;
+    final startChar = _mentionSyntax!.startingCharacter;
 
     cancelMentioning();
 
     bGuardDeletion = true;
     text = text.replaceRange(
-        mentionStart, mentionEnd, '$startChar${mention.displayName}');
+      mentionStart,
+      mentionEnd,
+      '$startChar${mention.displayName}',
+    );
     bGuardDeletion = false;
 
     selection = TextSelection.collapsed(
-        offset: mentionVisibleTextEnd, affinity: TextAffinity.upstream);
+      offset: mentionVisibleTextEnd,
+      affinity: TextAffinity.upstream,
+    );
 
     _sortMentions();
   }
@@ -338,11 +390,7 @@ class MentionTextEditingController extends TextEditingController {
       _mentionLength != null &&
       _mentionSyntax != null;
 
-  void _sortMentions() {
-    _cachedMentions.sort((_TextMention a, _TextMention b) {
-      return a.start - b.start;
-    });
-  }
+  void _sortMentions() => _cachedMentions.sort((a, b) => a.start - b.start);
 
   /// Cancel mentioning
   void cancelMentioning() {
@@ -350,23 +398,20 @@ class MentionTextEditingController extends TextEditingController {
     _mentionLength = null;
     _mentionSyntax = null;
 
-    if (onSuggestionChanged != null) {
-      onSuggestionChanged!(null, null);
-    }
+    onSuggestionChanged?.call(null, null);
   }
 
   void _processTextChange() {
-    List<Diff> differences = diff(text, _previousText);
-
+    final differences = diff(text, _previousText);
     int currentTextIndex = 0;
 
     for (int i = 0; i < differences.length; ++i) {
-      Diff difference = differences[i];
+      final difference = differences[i];
 
       if (difference.operation == DIFF_INSERT) {
         if (isMentioning()) {
           // Spaces are considered breakers for mentioning
-          if (difference.text == " ") {
+          if (difference.text == ' ') {
             cancelMentioning();
           } else {
             if (currentTextIndex <= _mentionStartingIndex! + _mentionLength! &&
@@ -374,9 +419,12 @@ class MentionTextEditingController extends TextEditingController {
               _mentionLength = _mentionLength! + difference.text.length;
               if (onSuggestionChanged != null) {
                 onSuggestionChanged!(
-                    _mentionSyntax!,
-                    text.substring(_mentionStartingIndex!,
-                        _mentionStartingIndex! + _mentionLength!));
+                  _mentionSyntax!,
+                  text.substring(
+                    _mentionStartingIndex!,
+                    _mentionStartingIndex! + _mentionLength!,
+                  ),
+                );
               }
             } else {
               cancelMentioning();
@@ -384,7 +432,7 @@ class MentionTextEditingController extends TextEditingController {
           }
         } else {
           for (int i = 0; i < mentionSyntaxes.length; ++i) {
-            final MentionSyntax syntax = mentionSyntaxes[i];
+            final syntax = mentionSyntaxes[i];
             if (difference.text == syntax.startingCharacter) {
               _mentionStartingIndex = currentTextIndex;
               _mentionLength = 1;
@@ -398,42 +446,45 @@ class MentionTextEditingController extends TextEditingController {
       if (difference.operation == DIFF_DELETE) {
         if (isMentioning()) {
           // If we removed our startingCharacter, chancel mentioning
-          // TODO: This detects if *ANY* character contains our mention character, which isn't ideal..
-          // But I have not yet figured out how to get whether we are currently deleting our starting character..
-          // We can, however, find out if we are deleting our starting character AFTER our mention start so that names with the starting character don't cancel mentioning when backspacing
+          //
+          // But I have not yet figured out how to get whether we are currently
+          // deleting our starting character.. We can, however, find out
+          // if we are deleting our starting character AFTER our mention start
+          // so that names with the starting character don't cancel mentioning
+          // when backspacing
+          // TODO(Amaryllis): This detects if *ANY* character contains our mention character, which isn't ideal..
           if (difference.text.contains(_mentionSyntax!.startingCharacter) &&
               currentTextIndex <= _mentionStartingIndex!) {
             cancelMentioning();
           } else {
             if (currentTextIndex < _mentionStartingIndex!) {
               continue;
-            }
-
-            if (currentTextIndex > _mentionStartingIndex! + _mentionLength!) {
+            } else if (currentTextIndex >
+                _mentionStartingIndex! + _mentionLength!) {
               continue;
             }
 
             _mentionLength = _mentionLength! - difference.text.length;
             assert(_mentionLength! >= 0);
 
-            // If we no longer have text after our mention sign then hide suggestions until we start typing again
+            // If we no longer have text after our mention sign then
+            // hide suggestions until we start typing again
             if (_mentionLength == 1) {
-              if (onSuggestionChanged != null) {
-                onSuggestionChanged!(null, null);
-              }
+              onSuggestionChanged?.call(null, null);
             } else {
-              if (onSuggestionChanged != null) {
-                onSuggestionChanged!(
-                    _mentionSyntax!,
-                    text.substring(_mentionStartingIndex!,
-                        _mentionStartingIndex! + _mentionLength!));
-              }
+              onSuggestionChanged?.call(
+                _mentionSyntax!,
+                text.substring(
+                  _mentionStartingIndex!,
+                  _mentionStartingIndex! + _mentionLength!,
+                ),
+              );
             }
           }
         }
       }
 
-      int rangeStart = currentTextIndex;
+      final rangeStart = currentTextIndex;
       int rangeEnd = currentTextIndex + difference.text.length;
 
       // If we insert a character in a position then it should end the range on the last character, not after the last character
@@ -442,13 +493,14 @@ class MentionTextEditingController extends TextEditingController {
       }
 
       for (int x = _cachedMentions.length - 1; x >= 0; --x) {
-        final _TextMention mention = _cachedMentions[x];
+        final mention = _cachedMentions[x];
 
         // Not overlapping but we inserted text in front of mentions so we need to shift them
         if (mention.start >= currentTextIndex &&
             difference.operation == DIFF_INSERT) {
-          mention.start += difference.text.length;
-          mention.end += difference.text.length;
+          mention
+            ..start += difference.text.length
+            ..end += difference.text.length;
         }
 
         // Check for overlaps
@@ -464,20 +516,17 @@ class MentionTextEditingController extends TextEditingController {
         // Not overlapping but we removed text in front of mentions so we need to shift them
         if (mention.start >= currentTextIndex &&
             difference.operation == DIFF_DELETE) {
-          mention.start -= difference.text.length;
-          mention.end -= difference.text.length;
+          mention
+            ..start -= difference.text.length
+            ..end -= difference.text.length;
         }
       }
 
       if (difference.operation == DIFF_EQUAL) {
         currentTextIndex += difference.text.length;
-      }
-
-      if (difference.operation == DIFF_INSERT) {
+      } else if (difference.operation == DIFF_INSERT) {
         currentTextIndex += difference.text.length;
-      }
-
-      if (difference.operation == DIFF_DELETE) {
+      } else if (difference.operation == DIFF_DELETE) {
         currentTextIndex -= difference.text.length;
       }
     }
