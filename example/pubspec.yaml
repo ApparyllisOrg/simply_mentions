@@ -1,7 +1,6 @@
 name: simply_mentions_example
 description: Simply Mentions Example
 version: 1.0.0+1
-publish_to: none
 
 environment:
   sdk: ">=3.0.6 <4.0.0"
@@ -23,7 +22,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints:
 
 flutter:
   uses-material-design: true
