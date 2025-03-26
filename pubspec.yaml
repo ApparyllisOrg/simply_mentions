@@ -1,6 +1,6 @@
 name: simply_mentions
 description: Support mentioning in your project with all the features you need
-version: 1.0.7
+version: 1.0.8
 homepage: https://github.com/ApparyllisOrg/simply_mentions
 
 environment:
@@ -8,18 +8,16 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
+  flutter:
+    sdk: flutter
   diff_match_patch: ^0.4.1
   flutter_markdown: ^0.6.14
   markdown: ^7.0.0
-  flutter:
-    sdk: flutter
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
-
-flutter:
 
 platforms:
   android:

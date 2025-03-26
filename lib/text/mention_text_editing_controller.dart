@@ -1,78 +1,16 @@
+// ignore_for_file: constant_identifier_names
 import 'dart:async';
 
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/material.dart';
 
-// ignore_for_file: constant_identifier_names
-
-// Mention object that store the id, display name and avatarurl of the mention
-// You can inherit from this to add your own custom data, should you need to
-
-// Keep in copy with diff.dart from diff_match_patch package
+part 'mention_object.dart';
+part 'mention_syntax.dart';
+part 'text_mention.dart';
 
 const DIFF_DELETE = 1;
 const DIFF_INSERT = -1;
 const DIFF_EQUAL = 0;
-
-class MentionObject {
-  MentionObject(
-      {required this.id, required this.displayName, required this.avatarUrl});
-
-  /// id of the mention, should match ^([a-zA-Z0-9]){1,}$
-  final String id;
-  final String displayName;
-  final String avatarUrl;
-}
-
-/// Mention syntax for determining when to start mentioning and parsing to and from markup
-/// Final markup text would be Prefix -> StartingCharacter -> Id of mention -> Suffix
-class MentionSyntax {
-  MentionSyntax(
-      {required this.startingCharacter,
-      required this.missingText,
-      this.prefix = '<###',
-      this.suffix = '###>',
-      this.pattern = "[a-zA-Z0-9]{1,}"}) {
-    _mentionRegex = RegExp('($prefix)($startingCharacter)($pattern)($suffix)');
-  }
-
-  /// The character the regex pattern starts with, used to more performantly
-  /// find sections in the text, needs to be a single character
-  final String startingCharacter;
-
-  /// The prefix to add to the final markup text per mention of this type
-  final String prefix;
-
-  /// The suffix to add to the final markup text per mention of this type
-  final String suffix;
-
-  /// The display name to show when the mention with the specified id
-  /// no longer exists
-  final String missingText;
-
-  /// The inner pattern that will be followed to find a mention
-  final String pattern;
-
-  late RegExp _mentionRegex;
-
-  RegExp getRegExp() => _mentionRegex;
-}
-
-/// Local-only class to store mentions currently stored in the string visible to the user
-class _TextMention {
-  _TextMention(
-      {required this.id,
-      required this.display,
-      required this.start,
-      required this.end,
-      required this.syntax});
-
-  final String id;
-  final String display;
-  final MentionSyntax syntax;
-  int start;
-  int end;
-}
 
 /// Text editing controller that can parse mentions
 class MentionTextEditingController extends TextEditingController {
@@ -102,10 +40,10 @@ class MentionTextEditingController extends TextEditingController {
   final MentionObject? Function(BuildContext, String) idToMentionObject;
 
   /// Background color of the text for the mention
-  final Color mentionBgColor;
+  final Color? mentionBgColor;
 
   /// Color of the text for the mention
-  final Color mentionTextColor;
+  final Color? mentionTextColor;
 
   /// EditingController to copy our text to, used for things like
   /// the Autocorrect widget
@@ -114,13 +52,13 @@ class MentionTextEditingController extends TextEditingController {
   final List<_TextMention> _cachedMentions = [];
 
   /// Text style for the mention
-  final TextStyle mentionTextStyle;
+  final TextStyle? mentionTextStyle;
 
   /// Text style for normal non-mention text
-  final TextStyle runTextStyle;
+  final TextStyle? runTextStyle;
 
+  bool _bGuardDeletion = false;
   String _previousText = '';
-
   int? _mentionStartingIndex;
   int? _mentionLength;
   MentionSyntax? _mentionSyntax;
@@ -191,9 +129,14 @@ class MentionTextEditingController extends TextEditingController {
     text = deconstructedText;
   }
 
-  TextSpan _createSpanForNonMatchingRange(
-      int start, int end, BuildContext context) {
-    return TextSpan(text: text.substring(start, end), style: runTextStyle);
+  TextSpan _createSpanForNonMatchingRange({
+    required int start,
+    required int end,
+  }) {
+    return TextSpan(
+      text: text.substring(start, end),
+      style: runTextStyle,
+    );
   }
 
   /// Get the current search string for the mention (this is the mention minus
@@ -249,30 +192,41 @@ class MentionTextEditingController extends TextEditingController {
     TextStyle? style,
     required bool withComposing,
   }) {
-    final List<InlineSpan> inlineSpans = [];
     int lastStartingRunStart = 0;
+    final inlineSpans = <InlineSpan>[];
 
-    for (int i = 0; i < _cachedMentions.length; ++i) {
-      final _TextMention mention = _cachedMentions[i];
-
-      final int indexToEndRegular = mention.start;
+    for (final mention in _cachedMentions) {
+      final indexToEndRegular = mention.start;
 
       if (indexToEndRegular != lastStartingRunStart) {
-        inlineSpans.add(_createSpanForNonMatchingRange(
-            lastStartingRunStart, indexToEndRegular, context));
+        inlineSpans.add(
+          _createSpanForNonMatchingRange(
+            start: lastStartingRunStart,
+            end: indexToEndRegular,
+          ),
+        );
       }
 
-      inlineSpans.add(TextSpan(
+      inlineSpans.add(
+        TextSpan(
           text: text.substring(mention.start, mention.end),
-          style: mentionTextStyle.copyWith(
-              backgroundColor: mentionBgColor, color: mentionTextColor)));
+          style: (mentionTextStyle ?? style)?.copyWith(
+            backgroundColor: mentionBgColor,
+            color: mentionTextColor,
+          ),
+        ),
+      );
 
       lastStartingRunStart = mention.end;
     }
 
     if (lastStartingRunStart < text.length) {
-      inlineSpans.add(_createSpanForNonMatchingRange(
-          lastStartingRunStart, text.length, context));
+      inlineSpans.add(
+        _createSpanForNonMatchingRange(
+          start: lastStartingRunStart,
+          end: text.length,
+        ),
+      );
     }
 
     return TextSpan(children: inlineSpans);
@@ -299,8 +253,6 @@ class MentionTextEditingController extends TextEditingController {
     }
   }
 
-  bool bGuardDeletion = false;
-
   /// Insert a mention in the currently mentioning position
   void insertMention(MentionObject mention) {
     assert(isMentioning());
@@ -321,10 +273,10 @@ class MentionTextEditingController extends TextEditingController {
 
     cancelMentioning();
 
-    bGuardDeletion = true;
+    _bGuardDeletion = true;
     text = text.replaceRange(
         mentionStart, mentionEnd, '$startChar${mention.displayName}');
-    bGuardDeletion = false;
+    _bGuardDeletion = false;
 
     selection = TextSelection.collapsed(
         offset: mentionVisibleTextEnd, affinity: TextAffinity.upstream);
@@ -452,7 +404,7 @@ class MentionTextEditingController extends TextEditingController {
         }
 
         // Check for overlaps
-        if (!bGuardDeletion) {
+        if (!_bGuardDeletion) {
           if (difference.operation != DIFF_EQUAL) {
             if (rangeStart < mention.end && rangeEnd > mention.start) {
               _cachedMentions.removeAt(x);

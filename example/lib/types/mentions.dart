@@ -1,8 +1,6 @@
-// Define a new mention
 import 'package:flutter/material.dart';
-import 'package:simply_mentions/markdown/markdown_mentioned_object.dart';
-import 'package:simply_mentions/text/mention_text_editing_controller.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:simply_mentions/simply_mentions.dart';
 import 'package:simply_mentions_example/main.dart';
 
 // Define a new mention with an id that will be used for markdown
@@ -21,13 +19,14 @@ class DocumentMention extends MarkdownMentionSyntax {
 
 // Create a syntax for the mention while editing text, regex should match the markdown regex or vice versa
 class DocumentMentionEditableSyntax extends MentionSyntax {
-  DocumentMentionEditableSyntax(BuildContext context)
+  DocumentMentionEditableSyntax()
       : super(
-            startingCharacter: '@',
-            prefix: '<###',
-            suffix: '###>',
-            missingText: "Unknown document",
-            pattern: "[a-zA-Z0-9-]{1,}");
+          startingCharacter: '@',
+          prefix: '<###',
+          suffix: '###>',
+          missingText: "Unknown document",
+          pattern: "[a-zA-Z0-9-]{1,}",
+        );
 }
 
 // Mention building for displaying in markdown

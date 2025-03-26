@@ -44,7 +44,7 @@ If you want to support exporting the text and having it visible in a non-textfie
 * [https://pub.dev/packages/markdown](https://pub.dev/packages/markdown)
 * [https://pub.dev/packages/remove_diacritic](https://pub.dev/packages/remove_diacritic) (Optional, but useful to remove diacritics from your search query for the mention list)
 
-## ⚡ Quick Getting Started for the textfield ⚡
+## ⚡ Quick Getting Started for the TextField ⚡
 
 Everything is done using a MentionTextEditingController, a derived class from TextEditingController with all support for mentioning built in.
 
@@ -75,7 +75,7 @@ void onSuggestionChanged(MentionSyntax? syntax, String? fullSearchString) {
 }
 ```
 
-Then create a list of mentions, you would do this programatically but here a list you can use for testing:
+Then create a list of mentions, you would do this programmatically but here a list you can use for testing:
 
 ```dart
 final List<MentionObject> documentMentions = [
@@ -94,7 +94,7 @@ final List<MentionObject> documentMentions = [
 ];
 ```
 
-Then pass this to your textfield:
+Then pass this to your TextField:
 
 ```dart
 TextField(

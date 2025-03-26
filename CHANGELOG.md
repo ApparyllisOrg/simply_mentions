@@ -31,3 +31,10 @@
 ## 1.0.7
 
 - Fix issue where pasting text would invalidate mentions further down below
+
+## 1.0.8
+
+- Added ability to use inherited text style instead of fixed in the controller constructor
+- Documentation improvements
+- Code formatting improvements
+

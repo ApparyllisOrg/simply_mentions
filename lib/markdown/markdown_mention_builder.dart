@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 
@@ -21,34 +21,14 @@ import 'package:markdown/markdown.dart' as md;
 abstract class MarkdownMentionBuilder extends MarkdownElementBuilder {
   MarkdownMentionBuilder(this.onPressed);
 
+  /// Called when a mention is tapped.
   final void Function(String) onPressed;
 
-  // Provide a more user-friendly override to create the widget
+  /// Provide a more user-friendly override to create the widget.
   Widget createWidget(md.Element element, TextStyle? preferredStyle);
 
   @override
   Widget visitElementAfter(md.Element element, TextStyle? preferredStyle) {
     return createWidget(element, preferredStyle);
-  }
-}
-
-// Syntax declaration for mentions within markdown
-class MarkdownMentionSyntax extends md.DelimiterSyntax {
-  MarkdownMentionSyntax({this.tagName = 'mention', this.patternToUse = r'<@([a-zA-Z0-9]{1,})>', this.idRegexGroup = 1, super.startCharacter})
-      : super(patternToUse);
-
-  // Name of the tag to use for the element, used in conjuction with builders and MarkdownMentionBuilder
-  final String tagName;
-
-  // Pattern to use for the mention, typically r'<@([a-zA-Z0-9]{1,})>', however you can change the requirements if needed
-  final String patternToUse;
-
-  // Regex group the ID is located in
-  final int idRegexGroup;
-
-  @override
-  bool onMatch(md.InlineParser parser, Match match) {
-    parser.addNode(md.Element.text(tagName, match[1]!));
-    return true;
   }
 }
