@@ -53,10 +53,10 @@ packages:
     dependency: "direct main"
     description:
       name: diacritic
-      sha256: a84e03ec2779375fb86430dbe9d8fba62c68376f2499097a5f6e75556babe706
+      sha256: c09a420e737dc036122121fea9f774767e95068f34a17894ee9db30c5bda3075
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.4"
+    version: "0.1.3"
   diff_match_patch:
     dependency: transitive
     description:
@@ -90,10 +90,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_markdown
-      sha256: "35108526a233cc0755664d445f8a6b4b61e6f8fe993b3658b80b4a26827fc196"
+      sha256: "7b25c10de1fea883f3c4f9b8389506b54053cd00807beab69fd65c8653a2711f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.18+2"
+    version: "0.6.14"
   flutter_portal:
     dependency: "direct main"
     description:
@@ -143,10 +143,10 @@ packages:
     dependency: "direct main"
     description:
       name: markdown
-      sha256: acf35edccc0463a9d7384e437c015a3535772e09714cf60e07eeef3a15870dcd
+      sha256: "4ed544d2ce84975b2ab5cbd4268f2d31f47858553ae2295c92fdf5d6e431a927"
       url: "https://pub.dev"
     source: hosted
-    version: "7.1.1"
+    version: "7.0.0"
   matcher:
     dependency: transitive
     description:
