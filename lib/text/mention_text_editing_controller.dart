@@ -12,6 +12,18 @@ const DIFF_DELETE = 1;
 const DIFF_INSERT = -1;
 const DIFF_EQUAL = 0;
 
+/// Typedef for suggestion changed callback.
+typedef SuggestionChangedCallback = void Function(
+  MentionSyntax? syntax,
+  String? searchString,
+);
+
+/// Typedef for id to mention callback.
+typedef IdToMentionCallback = MentionObject? Function(
+  BuildContext context,
+  String mentionId,
+);
+
 /// Text editing controller that can parse mentions
 class MentionTextEditingController extends TextEditingController {
   MentionTextEditingController({
@@ -33,11 +45,11 @@ class MentionTextEditingController extends TextEditingController {
   final List<MentionSyntax> mentionSyntaxes;
 
   /// Delegate called when suggestion has changed
-  Function(MentionSyntax? syntax, String?)? onSuggestionChanged;
+  final SuggestionChangedCallback? onSuggestionChanged;
 
   /// Function to get a mention from an id, used to deconstruct markup
   /// on construct
-  final MentionObject? Function(BuildContext, String) idToMentionObject;
+  final IdToMentionCallback idToMentionObject;
 
   /// Background color of the text for the mention
   final Color? mentionBgColor;
@@ -47,15 +59,15 @@ class MentionTextEditingController extends TextEditingController {
 
   /// EditingController to copy our text to, used for things like
   /// the Autocorrect widget
-  TextEditingController? controllerToCopyTo;
-
-  final List<_TextMention> _cachedMentions = [];
+  final TextEditingController? controllerToCopyTo;
 
   /// Text style for the mention
   final TextStyle? mentionTextStyle;
 
   /// Text style for normal non-mention text
   final TextStyle? runTextStyle;
+
+  final List<_TextMention> _cachedMentions = [];
 
   bool _bGuardDeletion = false;
   String _previousText = '';
@@ -248,9 +260,7 @@ class MentionTextEditingController extends TextEditingController {
 
     _previousText = text;
 
-    if (controllerToCopyTo != null) {
-      controllerToCopyTo!.text = text;
-    }
+    controllerToCopyTo?.text = text;
   }
 
   /// Insert a mention in the currently mentioning position
@@ -302,9 +312,7 @@ class MentionTextEditingController extends TextEditingController {
     _mentionLength = null;
     _mentionSyntax = null;
 
-    if (onSuggestionChanged != null) {
-      onSuggestionChanged!(null, null);
-    }
+    onSuggestionChanged?.call(null, null);
   }
 
   void _processTextChange() {
@@ -324,12 +332,13 @@ class MentionTextEditingController extends TextEditingController {
             if (currentTextIndex <= _mentionStartingIndex! + _mentionLength! &&
                 currentTextIndex >= _mentionStartingIndex! + _mentionLength!) {
               _mentionLength = _mentionLength! + difference.text.length;
-              if (onSuggestionChanged != null) {
-                onSuggestionChanged!(
-                    _mentionSyntax!,
-                    text.substring(_mentionStartingIndex!,
-                        _mentionStartingIndex! + _mentionLength!));
-              }
+              onSuggestionChanged?.call(
+                _mentionSyntax!,
+                text.substring(
+                  _mentionStartingIndex!,
+                  _mentionStartingIndex! + _mentionLength!,
+                ),
+              );
             } else {
               cancelMentioning();
             }
@@ -368,18 +377,18 @@ class MentionTextEditingController extends TextEditingController {
             _mentionLength = _mentionLength! - difference.text.length;
             assert(_mentionLength! >= 0);
 
-            // If we no longer have text after our mention sign then hide suggestions until we start typing again
+            // If we no longer have text after our mention sign then hide
+            // suggestions until we start typing again
             if (_mentionLength == 1) {
-              if (onSuggestionChanged != null) {
-                onSuggestionChanged!(null, null);
-              }
+              onSuggestionChanged?.call(null, null);
             } else {
-              if (onSuggestionChanged != null) {
-                onSuggestionChanged!(
-                    _mentionSyntax!,
-                    text.substring(_mentionStartingIndex!,
-                        _mentionStartingIndex! + _mentionLength!));
-              }
+              onSuggestionChanged?.call(
+                _mentionSyntax!,
+                text.substring(
+                  _mentionStartingIndex!,
+                  _mentionStartingIndex! + _mentionLength!,
+                ),
+              );
             }
           }
         }
