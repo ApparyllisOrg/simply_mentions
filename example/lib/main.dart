@@ -37,8 +37,12 @@ class SimplyMentionsExample extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Simply Mentions Example',
-      theme: ThemeData.light(
+      theme: ThemeData(
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(255, 114, 67, 67),
+          brightness: Brightness.light,
+        ),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
@@ -47,6 +51,8 @@ class SimplyMentionsExample extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
+      // Theme mode system by default
+      // themeMode: ThemeMode.system,
       home: const ExamplePage(),
     );
   }
@@ -77,14 +83,17 @@ class _ExamplePageState extends State<ExamplePage> {
       // the [MentionTextEditingController.onSuggestionChanged].
       _mentionTextEditingController = MentionTextEditingController(
         mentionSyntaxes: [DocumentMentionEditableSyntax()],
-        mentionBgColor: theme.colorScheme.primary,
-        mentionTextColor: theme.colorScheme.onPrimary,
+        // mentionBgColor: theme.colorScheme.primary,
+        // mentionTextColor: theme.colorScheme.onPrimary,
 
-        /// Pass fixed style
-        runTextStyle: const TextStyle(color: Colors.white),
+        /// Pass fixed text style
+        // runTextStyle: const TextStyle(color: Colors.white),
 
-        /// Pass fixed style
-        mentionTextStyle: const TextStyle(),
+        /// Pass fixed text style
+        mentionTextStyle: TextStyle(
+          backgroundColor: theme.colorScheme.primary,
+          color: theme.colorScheme.onPrimary,
+        ),
         onSuggestionChanged: onSuggestionChanged,
         idToMentionObject: (context, id) =>
             documentMentions.firstWhere((element) => element.id == id),
@@ -126,13 +135,14 @@ class _ExamplePageState extends State<ExamplePage> {
 
     final possibleMentions = <Widget>[];
 
-    /// Remove diacritics and lowercase the search string so matches are easier found
+    /// Remove diacritics and lowercase the search string so matches
+    /// are easier found
     final safeSearch = removeDiacritics(
       _mentionTextEditingController!.getSearchText(),
     );
 
-    for (var element in documentMentions) {
-      final safeName = removeDiacritics(element.displayName.toLowerCase());
+    for (var mention in documentMentions) {
+      final safeName = removeDiacritics(mention.displayName.toLowerCase());
 
       if (safeName.contains(safeSearch)) {
         possibleMentions.add(
@@ -141,18 +151,18 @@ class _ExamplePageState extends State<ExamplePage> {
             child: Ink(
               child: InkWell(
                 // Tell the mention controller to insert the mention
-                onTap: () => onMentionSelected(element),
+                onTap: () => onMentionSelected(mention),
                 splashColor: Theme.of(context).highlightColor,
                 child: Row(
                   children: [
-                    if (element.avatarUrl != null)
+                    if (mention.avatarUrl != null)
                       Image.network(
-                        element.avatarUrl!,
+                        mention.avatarUrl!,
                         width: 25,
                         height: 25,
                       ),
                     const SizedBox(width: 6),
-                    Text(element.displayName),
+                    Text(mention.displayName),
                   ],
                 ),
               ),
@@ -235,7 +245,6 @@ class _ExamplePageState extends State<ExamplePage> {
                   softLineBreak: true,
                   builders: {
                     'docMention': DocumentMentionBuilder(
-                      context: context,
                       (pressedMentionId) {
                         // Do what you want to do when you pressed on a member
                       },

@@ -30,10 +30,10 @@ class MentionTextEditingController extends TextEditingController {
     this.controllerToCopyTo,
     required this.mentionSyntaxes,
     this.onSuggestionChanged,
-    required this.mentionBgColor,
-    required this.mentionTextColor,
-    required this.mentionTextStyle,
-    required this.runTextStyle,
+    this.mentionBgColor,
+    this.mentionTextColor,
+    this.mentionTextStyle,
+    this.runTextStyle,
     required this.idToMentionObject,
     super.text,
   }) {
@@ -142,12 +142,13 @@ class MentionTextEditingController extends TextEditingController {
   }
 
   TextSpan _createSpanForNonMatchingRange({
+    required TextStyle? style,
     required int start,
     required int end,
   }) {
     return TextSpan(
       text: text.substring(start, end),
-      style: runTextStyle,
+      style: runTextStyle ?? style,
     );
   }
 
@@ -213,6 +214,7 @@ class MentionTextEditingController extends TextEditingController {
       if (indexToEndRegular != lastStartingRunStart) {
         inlineSpans.add(
           _createSpanForNonMatchingRange(
+            style: style,
             start: lastStartingRunStart,
             end: indexToEndRegular,
           ),
@@ -235,6 +237,7 @@ class MentionTextEditingController extends TextEditingController {
     if (lastStartingRunStart < text.length) {
       inlineSpans.add(
         _createSpanForNonMatchingRange(
+          style: style,
           start: lastStartingRunStart,
           end: text.length,
         ),

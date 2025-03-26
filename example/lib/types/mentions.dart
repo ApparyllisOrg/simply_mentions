@@ -31,9 +31,7 @@ class DocumentMentionEditableSyntax extends MentionSyntax {
 
 // Mention building for displaying in markdown
 class DocumentMentionBuilder extends MarkdownMentionBuilder {
-  DocumentMentionBuilder(super.onPressed, {required this.context});
-
-  final BuildContext context;
+  DocumentMentionBuilder(super.onPressed);
 
   @override
   Widget createWidget(md.Element element, TextStyle? preferredStyle) {
@@ -48,37 +46,42 @@ class DocumentMentionBuilder extends MarkdownMentionBuilder {
       return RichText(text: TextSpan(text: mentionedId));
     }
 
-    final theme = Theme.of(context);
     final name = documentMentions[mentionIndex].displayName;
 
-    return RichText(
-      text: TextSpan(
-        children: [
-          WidgetSpan(
-            baseline: TextBaseline.alphabetic,
-            alignment: PlaceholderAlignment.baseline,
-            child: GestureDetector(
-              onTap: () {
-                // Do what you need to do using mentionedId
-              },
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                child: RichText(
-                  text: TextSpan(
-                    text: '@$name',
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimary,
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+
+        return RichText(
+          text: TextSpan(
+            children: [
+              WidgetSpan(
+                baseline: TextBaseline.alphabetic,
+                alignment: PlaceholderAlignment.baseline,
+                child: GestureDetector(
+                  onTap: () {
+                    // Do what you need to do using mentionedId
+                  },
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: RichText(
+                      text: TextSpan(
+                        text: '@$name',
+                        style: TextStyle(
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      }
     );
   }
 }
