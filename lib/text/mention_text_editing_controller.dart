@@ -148,7 +148,7 @@ class MentionTextEditingController extends TextEditingController {
   }) {
     return TextSpan(
       text: text.substring(start, end),
-      style: runTextStyle ?? style,
+      style: style?.merge(runTextStyle) ?? runTextStyle,
     );
   }
 
@@ -224,7 +224,7 @@ class MentionTextEditingController extends TextEditingController {
       inlineSpans.add(
         TextSpan(
           text: text.substring(mention.start, mention.end),
-          style: (mentionTextStyle ?? style)?.copyWith(
+          style: (style?.merge(mentionTextStyle) ?? mentionTextStyle)?.copyWith(
             backgroundColor: mentionBgColor,
             color: mentionTextColor,
           ),
