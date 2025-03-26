@@ -37,38 +37,48 @@ class DocumentMentionBuilder extends MarkdownMentionBuilder {
 
   @override
   Widget createWidget(md.Element element, TextStyle? preferredStyle) {
-    final String mentionedId = element.children![0].textContent;
+    final mentionedId = element.children![0].textContent;
 
-    final mentionIndex =
-        documentMentions.indexWhere((element) => element.id == mentionedId);
+    final mentionIndex = documentMentions.indexWhere(
+      (element) => element.id == mentionedId,
+    );
 
     // If we don't find it, display the raw text
     if (mentionIndex == -1) {
       return RichText(text: TextSpan(text: mentionedId));
     }
 
-    final String name = documentMentions[mentionIndex].displayName;
+    final theme = Theme.of(context);
+    final name = documentMentions[mentionIndex].displayName;
 
     return RichText(
-        text: TextSpan(children: [
-      WidgetSpan(
-          baseline: TextBaseline.alphabetic,
-          alignment: PlaceholderAlignment.baseline,
-          child: GestureDetector(
+      text: TextSpan(
+        children: [
+          WidgetSpan(
+            baseline: TextBaseline.alphabetic,
+            alignment: PlaceholderAlignment.baseline,
+            child: GestureDetector(
               onTap: () {
                 // Do what you need to do using mentionedId
               },
               child: DecoratedBox(
-                  decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(2)),
-                  child: RichText(
-                    text: TextSpan(
-                      text: '@$name',
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: RichText(
+                  text: TextSpan(
+                    text: '@$name',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimary,
                     ),
-                  ))))
-    ]));
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

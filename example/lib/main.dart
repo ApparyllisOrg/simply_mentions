@@ -79,8 +79,10 @@ class _ExamplePageState extends State<ExamplePage> {
         mentionSyntaxes: [DocumentMentionEditableSyntax()],
         mentionBgColor: theme.colorScheme.primary,
         mentionTextColor: theme.colorScheme.onPrimary,
+
         /// Pass fixed style
         runTextStyle: const TextStyle(color: Colors.white),
+
         /// Pass fixed style
         mentionTextStyle: const TextStyle(),
         onSuggestionChanged: onSuggestionChanged,
@@ -163,7 +165,7 @@ class _ExamplePageState extends State<ExamplePage> {
     return Material(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 400),
-        child: Container(
+        child: DecoratedBox(
           decoration: BoxDecoration(
             color: const Color.fromARGB(255, 99, 94, 94),
             borderRadius: BorderRadius.circular(10),
