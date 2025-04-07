@@ -9,7 +9,7 @@ class MentionSyntax {
     required this.missingText,
     this.prefix = '<###',
     this.suffix = '###>',
-    this.pattern = "[a-zA-Z0-9]{1,}",
+    this.pattern = '[a-zA-Z0-9]{1,}',
   }) {
     _mentionRegex = RegExp(
       '($prefix)($startingCharacter)($pattern)($suffix)',

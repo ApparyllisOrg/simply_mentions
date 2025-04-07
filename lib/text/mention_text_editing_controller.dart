@@ -10,9 +10,9 @@ part 'mention_suggestion.dart';
 part 'text_mention.dart';
 
 // Keep in copy with diff.dart from diff_match_patch package
-const DIFF_DELETE = 1;
-const DIFF_INSERT = -1;
-const DIFF_EQUAL = 0;
+const int DIFF_DELETE = 1;
+const int DIFF_INSERT = -1;
+const int DIFF_EQUAL = 0;
 
 /// Typedef for suggestion callback.
 typedef SuggestionCallback = void Function(MentionSuggestion suggestion);
@@ -67,8 +67,8 @@ class MentionTextEditingController extends TextEditingController {
   /// Text style for normal non-mention text
   final TextStyle? runTextStyle;
 
-  final _suggestionCallbacks = <SuggestionCallback>[];
-  final _cachedMentions = <_TextMention>[];
+  final List<SuggestionCallback> _suggestionCallbacks = <SuggestionCallback>[];
+  final List<_TextMention> _cachedMentions = <_TextMention>[];
   bool _bGuardDeletion = false;
   String _previousText = '';
   int? _mentionStartingIndex;
@@ -99,30 +99,30 @@ class MentionTextEditingController extends TextEditingController {
     int lastStartingRunStart = 0;
 
     for (int i = 0; i < markupText.length; ++i) {
-      final character = markupText[i];
+      final String character = markupText[i];
 
       for (final MentionSyntax syntax in mentionSyntaxes) {
         if (character != syntax.prefix[0]) {
           continue;
         }
 
-        final subStr = markupText.substring(i, markupText.length);
-        final match = syntax.getRegExp().firstMatch(subStr);
+        final String subStr = markupText.substring(i, markupText.length);
+        final RegExpMatch? match = syntax.getRegExp().firstMatch(subStr);
 
         /// Ensure the match starts at the start of our substring
         if (match != null && match.start == 0) {
           deconstructedText += markupText.substring(lastStartingRunStart, i);
 
-          final matchedMarkup = match.input.substring(match.start, match.end);
-          final mentionId = match[3]!;
-          final mention = await idToMentionObject(context, mentionId);
+          final String matchedMarkup = match.input.substring(match.start, match.end);
+          final String mentionId = match[3]!;
+          final MentionObject? mention = await idToMentionObject(context, mentionId);
 
-          final mentionDisplayName = mention?.displayName ?? syntax.missingText;
+          final String mentionDisplayName = mention?.displayName ?? syntax.missingText;
 
-          final insertText = '${syntax.startingCharacter}$mentionDisplayName';
+          final String insertText = '${syntax.startingCharacter}$mentionDisplayName';
 
-          final indexToInsertMention = deconstructedText.length;
-          final indexToEndInsertion = indexToInsertMention + insertText.length;
+          final int indexToInsertMention = deconstructedText.length;
+          final int indexToEndInsertion = indexToInsertMention + insertText.length;
 
           _cachedMentions.add(
             _TextMention(
@@ -216,10 +216,10 @@ class MentionTextEditingController extends TextEditingController {
     required bool withComposing,
   }) {
     int lastStartingRunStart = 0;
-    final inlineSpans = <InlineSpan>[];
+    final List<InlineSpan> inlineSpans = <InlineSpan>[];
 
-    for (final mention in _cachedMentions) {
-      final indexToEndRegular = mention.start;
+    for (final _TextMention mention in _cachedMentions) {
+      final int indexToEndRegular = mention.start;
 
       if (indexToEndRegular != lastStartingRunStart) {
         inlineSpans.add(
@@ -329,22 +329,22 @@ class MentionTextEditingController extends TextEditingController {
   }
 
   void _notifySuggestionListeners(MentionSuggestion suggestion) {
-    for (var e in _suggestionCallbacks) {
+    for (final SuggestionCallback e in _suggestionCallbacks) {
       e.call(suggestion);
     }
   }
 
   void _processTextChange() {
-    final differences = diff(text, _previousText);
+    final List<Diff> differences = diff(text, _previousText);
     int currentTextIndex = 0;
 
     for (int i = 0; i < differences.length; ++i) {
-      Diff difference = differences[i];
+      final Diff difference = differences[i];
 
       if (difference.operation == DIFF_INSERT) {
         if (isMentioning()) {
           // Spaces are considered breakers for mentioning
-          if (difference.text == " ") {
+          if (difference.text == ' ') {
             cancelMentioning();
           } else {
             if (currentTextIndex <= _mentionStartingIndex! + _mentionLength! &&
@@ -353,7 +353,7 @@ class MentionTextEditingController extends TextEditingController {
 
               _notifySuggestionListeners(
                 MentionSuggestion(
-                  syntax: _mentionSyntax!,
+                  syntax: _mentionSyntax,
                   search: text.substring(
                     _mentionStartingIndex!,
                     _mentionStartingIndex! + _mentionLength!,
@@ -366,7 +366,7 @@ class MentionTextEditingController extends TextEditingController {
           }
         } else {
           for (int i = 0; i < mentionSyntaxes.length; ++i) {
-            final syntax = mentionSyntaxes[i];
+            final MentionSyntax syntax = mentionSyntaxes[i];
             if (difference.text == syntax.startingCharacter) {
               _mentionStartingIndex = currentTextIndex;
               _mentionLength = 1;
@@ -405,7 +405,7 @@ class MentionTextEditingController extends TextEditingController {
             } else {
               _notifySuggestionListeners(
                 MentionSuggestion(
-                  syntax: _mentionSyntax!,
+                  syntax: _mentionSyntax,
                   search: text.substring(
                     _mentionStartingIndex!,
                     _mentionStartingIndex! + _mentionLength!,
@@ -417,7 +417,7 @@ class MentionTextEditingController extends TextEditingController {
         }
       }
 
-      int rangeStart = currentTextIndex;
+      final int rangeStart = currentTextIndex;
       int rangeEnd = currentTextIndex + difference.text.length;
 
       // If we insert a character in a position then it should end the range on the last character, not after the last character
