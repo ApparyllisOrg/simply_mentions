@@ -44,7 +44,7 @@ If you want to support exporting the text and having it visible in a non-textfie
 * [https://pub.dev/packages/markdown](https://pub.dev/packages/markdown)
 * [https://pub.dev/packages/remove_diacritic](https://pub.dev/packages/remove_diacritic) (Optional, but useful to remove diacritics from your search query for the mention list)
 
-## ⚡ Quick Getting Started for the textfield ⚡
+## ⚡ Quick Getting Started for the TextField ⚡
 
 Everything is done using a MentionTextEditingController, a derived class from TextEditingController with all support for mentioning built in.
 
@@ -66,7 +66,7 @@ This code will error out because you do not have `documentMentions`, `DocumentMe
 Add the `onSuggestionChanged` code to your widget:
 
 ```dart
-void onSuggestionChanged(MentionSyntax? syntax, String? fullSearchString) {
+void onSuggestionChanged(SuggestionObject suggestion) {
     // You can do what you want here.
     // Syntax and fullSearchString will be valid when you are currently mentioning.
     // It will be invalid when not mentioning.
@@ -75,7 +75,7 @@ void onSuggestionChanged(MentionSyntax? syntax, String? fullSearchString) {
 }
 ```
 
-Then create a list of mentions, you would do this programatically but here a list you can use for testing:
+Then create a list of mentions, you would do this programmatically but here a list you can use for testing:
 
 ```dart
 final List<MentionObject> documentMentions = [
@@ -94,7 +94,7 @@ final List<MentionObject> documentMentions = [
 ];
 ```
 
-Then pass this to your textfield:
+Then pass this to your TextField:
 
 ```dart
 TextField(
@@ -354,15 +354,17 @@ MarkdownBody(
 
 Several functions exist on the `MentionTextEditingController`, here is a table of the functions:
 
-| Function           | Description                                                                        |
-| :----------------- | :--------------------------------------------------------------------------------- |
-| `setMarkupText`    | Initialize a textfield with computer-readable syntax-containing(optional) raw text |
-| `getSearchText`    | Get the text used to search for a mention when mentioning is active.               |
-| `getSearchSyntax`  | Get the syntax used for the current mention and search                             |
-| `getMarkupText`    | Get the raw computer-readable syntax-containing text                               |
-| `insertMention`    | Insert a mention in the currently typing mention                                   |
-| `isMentioning`     | Check if we are currently mentioning                                               |
-| `cancelMentioning` | Cancel the current mentioning, if we are mentioning                                |
+| Function                   | Description                                                                        |
+|:---------------------------|:-----------------------------------------------------------------------------------|
+| `setMarkupText`            | Initialize a TextField with computer-readable syntax-containing(optional) raw text |
+| `getSearchText`            | Get the text used to search for a mention when mentioning is active.               |
+| `getSearchSyntax`          | Get the syntax used for the current mention and search                             |
+| `getMarkupText`            | Get the raw computer-readable syntax-containing text                               |
+| `insertMention`            | Insert a mention in the currently typing mention                                   |
+| `isMentioning`             | Check if we are currently mentioning                                               |
+| `cancelMentioning`         | Cancel the current mentioning, if we are mentioning                                |
+| `addSuggestionListener`    | Adds listener to listen suggestions changes                                        |
+| `removeSuggestionListener` | Remove listener that listens suggestions changes                                   |
 
 
 ## 👷 Contributing
