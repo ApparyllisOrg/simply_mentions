@@ -6,20 +6,19 @@ import 'package:flutter/material.dart';
 
 part 'mention_object.dart';
 part 'mention_syntax.dart';
+part 'mention_suggestion.dart';
 part 'text_mention.dart';
 
+// Keep in copy with diff.dart from diff_match_patch package
 const DIFF_DELETE = 1;
 const DIFF_INSERT = -1;
 const DIFF_EQUAL = 0;
 
-/// Typedef for suggestion changed callback.
-typedef SuggestionChangedCallback = void Function(
-  MentionSyntax? syntax,
-  String? searchString,
-);
+/// Typedef for suggestion callback.
+typedef SuggestionCallback = void Function(MentionSuggestion suggestion);
 
 /// Typedef for id to mention callback.
-typedef IdToMentionCallback = MentionObject? Function(
+typedef IdToMentionCallback = Future<MentionObject?> Function(
   BuildContext context,
   String mentionId,
 );
@@ -29,7 +28,7 @@ class MentionTextEditingController extends TextEditingController {
   MentionTextEditingController({
     this.controllerToCopyTo,
     required this.mentionSyntaxes,
-    this.onSuggestionChanged,
+    SuggestionCallback? onSuggestionChanged,
     this.mentionBgColor,
     this.mentionTextColor,
     this.mentionTextStyle,
@@ -38,14 +37,15 @@ class MentionTextEditingController extends TextEditingController {
     super.text,
   }) {
     _init();
+
+    if (onSuggestionChanged != null) {
+      addSuggestionListener(onSuggestionChanged);
+    }
   }
 
   /// Unique mention syntaxes, all syntaxes should have a different
   /// starting character
   final List<MentionSyntax> mentionSyntaxes;
-
-  /// Delegate called when suggestion has changed
-  final SuggestionChangedCallback? onSuggestionChanged;
 
   /// Function to get a mention from an id, used to deconstruct markup
   /// on construct
@@ -67,8 +67,8 @@ class MentionTextEditingController extends TextEditingController {
   /// Text style for normal non-mention text
   final TextStyle? runTextStyle;
 
-  final List<_TextMention> _cachedMentions = [];
-
+  final _suggestionCallbacks = <SuggestionCallback>[];
+  final _cachedMentions = <_TextMention>[];
   bool _bGuardDeletion = false;
   String _previousText = '';
   int? _mentionStartingIndex;
@@ -82,59 +82,69 @@ class MentionTextEditingController extends TextEditingController {
     super.dispose();
   }
 
+  /// Add a suggestion listener.
+  void addSuggestionListener(SuggestionCallback callback) =>
+      _suggestionCallbacks.add(callback);
+
+  /// Remove a suggestion listener.
+  void removeSuggestionListener(SuggestionCallback callback) =>
+      _suggestionCallbacks.remove(callback);
+
   /// Set markup text, this is used when you get data that has the mention
   /// syntax and you want to initialize the [TextField] with it.
-  void setMarkupText(BuildContext context, String markupText) {
-    String deconstructedText = '';
-
-    int lastStartingRunStart = 0;
-
+  Future<void> setMarkupText(BuildContext context, String markupText) async {
     _cachedMentions.clear();
 
+    String deconstructedText = '';
+    int lastStartingRunStart = 0;
+
     for (int i = 0; i < markupText.length; ++i) {
-      final String character = markupText[i];
+      final character = markupText[i];
 
       for (final MentionSyntax syntax in mentionSyntaxes) {
-        if (character == syntax.prefix[0]) {
-          final String subStr = markupText.substring(i, markupText.length);
-          final RegExpMatch? match = syntax.getRegExp().firstMatch(subStr);
-          // Ensure the match starts at the start of our substring
-          if (match != null && match.start == 0) {
-            deconstructedText += markupText.substring(lastStartingRunStart, i);
+        if (character != syntax.prefix[0]) {
+          continue;
+        }
 
-            final String matchedMarkup =
-                match.input.substring(match.start, match.end);
-            final String mentionId = match[3]!;
-            final MentionObject? mention =
-                idToMentionObject(context, mentionId);
+        final subStr = markupText.substring(i, markupText.length);
+        final match = syntax.getRegExp().firstMatch(subStr);
 
-            final String mentionDisplayName =
-                mention?.displayName ?? syntax.missingText;
+        /// Ensure the match starts at the start of our substring
+        if (match != null && match.start == 0) {
+          deconstructedText += markupText.substring(lastStartingRunStart, i);
 
-            final String insertText =
-                '${syntax.startingCharacter}$mentionDisplayName';
+          final matchedMarkup = match.input.substring(match.start, match.end);
+          final mentionId = match[3]!;
+          final mention = await idToMentionObject(context, mentionId);
 
-            final int indexToInsertMention = deconstructedText.length;
-            final int indexToEndInsertion =
-                indexToInsertMention + insertText.length;
+          final mentionDisplayName = mention?.displayName ?? syntax.missingText;
 
-            _cachedMentions.add(_TextMention(
-                id: mentionId,
-                display: insertText,
-                start: indexToInsertMention,
-                end: indexToEndInsertion,
-                syntax: syntax));
+          final insertText = '${syntax.startingCharacter}$mentionDisplayName';
 
-            deconstructedText += insertText;
-            lastStartingRunStart = i + matchedMarkup.length;
-          }
+          final indexToInsertMention = deconstructedText.length;
+          final indexToEndInsertion = indexToInsertMention + insertText.length;
+
+          _cachedMentions.add(
+            _TextMention(
+              id: mentionId,
+              display: insertText,
+              start: indexToInsertMention,
+              end: indexToEndInsertion,
+              syntax: syntax,
+            ),
+          );
+
+          deconstructedText += insertText;
+          lastStartingRunStart = i + matchedMarkup.length;
         }
       }
     }
 
     if (lastStartingRunStart != markupText.length) {
-      deconstructedText +=
-          markupText.substring(lastStartingRunStart, markupText.length);
+      deconstructedText += markupText.substring(
+        lastStartingRunStart,
+        markupText.length,
+      );
     }
 
     _previousText = deconstructedText;
@@ -157,7 +167,9 @@ class MentionTextEditingController extends TextEditingController {
   String getSearchText() {
     if (isMentioning()) {
       return text.substring(
-          _mentionStartingIndex! + 1, _mentionStartingIndex! + _mentionLength!);
+        _mentionStartingIndex! + 1,
+        _mentionStartingIndex! + _mentionLength!,
+      );
     }
 
     return '';
@@ -165,9 +177,7 @@ class MentionTextEditingController extends TextEditingController {
 
   /// Get the current search syntax for the current mention.
   /// This is useful when you have multiple syntaxes
-  MentionSyntax? getSearchSyntax() {
-    return _mentionSyntax;
-  }
+  MentionSyntax? getSearchSyntax() => _mentionSyntax;
 
   /// Get the text in the format that is readable by syntaxes.
   /// This will contain all text + syntax mentions (i.e. <###@USERID###>)
@@ -315,12 +325,17 @@ class MentionTextEditingController extends TextEditingController {
     _mentionLength = null;
     _mentionSyntax = null;
 
-    onSuggestionChanged?.call(null, null);
+    _notifySuggestionListeners(const MentionSuggestion());
+  }
+
+  void _notifySuggestionListeners(MentionSuggestion suggestion) {
+    for (var e in _suggestionCallbacks) {
+      e.call(suggestion);
+    }
   }
 
   void _processTextChange() {
-    List<Diff> differences = diff(text, _previousText);
-
+    final differences = diff(text, _previousText);
     int currentTextIndex = 0;
 
     for (int i = 0; i < differences.length; ++i) {
@@ -335,11 +350,14 @@ class MentionTextEditingController extends TextEditingController {
             if (currentTextIndex <= _mentionStartingIndex! + _mentionLength! &&
                 currentTextIndex >= _mentionStartingIndex! + _mentionLength!) {
               _mentionLength = _mentionLength! + difference.text.length;
-              onSuggestionChanged?.call(
-                _mentionSyntax!,
-                text.substring(
-                  _mentionStartingIndex!,
-                  _mentionStartingIndex! + _mentionLength!,
+
+              _notifySuggestionListeners(
+                MentionSuggestion(
+                  syntax: _mentionSyntax!,
+                  search: text.substring(
+                    _mentionStartingIndex!,
+                    _mentionStartingIndex! + _mentionLength!,
+                  ),
                 ),
               );
             } else {
@@ -348,7 +366,7 @@ class MentionTextEditingController extends TextEditingController {
           }
         } else {
           for (int i = 0; i < mentionSyntaxes.length; ++i) {
-            final MentionSyntax syntax = mentionSyntaxes[i];
+            final syntax = mentionSyntaxes[i];
             if (difference.text == syntax.startingCharacter) {
               _mentionStartingIndex = currentTextIndex;
               _mentionLength = 1;
@@ -383,13 +401,15 @@ class MentionTextEditingController extends TextEditingController {
             // If we no longer have text after our mention sign then hide
             // suggestions until we start typing again
             if (_mentionLength == 1) {
-              onSuggestionChanged?.call(null, null);
+              _notifySuggestionListeners(const MentionSuggestion());
             } else {
-              onSuggestionChanged?.call(
-                _mentionSyntax!,
-                text.substring(
-                  _mentionStartingIndex!,
-                  _mentionStartingIndex! + _mentionLength!,
+              _notifySuggestionListeners(
+                MentionSuggestion(
+                  syntax: _mentionSyntax!,
+                  search: text.substring(
+                    _mentionStartingIndex!,
+                    _mentionStartingIndex! + _mentionLength!,
+                  ),
                 ),
               );
             }

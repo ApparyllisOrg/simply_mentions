@@ -32,9 +32,11 @@
 
 - Fix issue where pasting text would invalidate mentions further down below
 
-## 1.0.8
+## 1.1.0
 
 - Added ability to use inherited text style instead of fixed in the controller constructor
 - Documentation improvements
 - Code formatting improvements
-
+- Suggestion callback API changed
+- Added ability adding post create MentionEditingController suggestion callbacks
+- Added ability to to do future request for idToMentionObject callback

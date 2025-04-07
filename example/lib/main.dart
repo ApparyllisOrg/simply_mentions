@@ -95,8 +95,9 @@ class _ExamplePageState extends State<ExamplePage> {
           color: theme.colorScheme.onPrimary,
         ),
         onSuggestionChanged: onSuggestionChanged,
-        idToMentionObject: (context, id) =>
-            documentMentions.firstWhere((element) => element.id == id),
+        idToMentionObject: (context, id) async => documentMentions.firstWhere(
+          (element) => element.id == id,
+        ),
       );
 
       // Set markup text, any text that is the raw text that will be saved
@@ -113,7 +114,7 @@ class _ExamplePageState extends State<ExamplePage> {
     _focusNode.requestFocus();
   }
 
-  void onSuggestionChanged(MentionSyntax? syntax, String? fullSearchString) {
+  void onSuggestionChanged(MentionSuggestion suggestion) {
     setState(() {});
   }
 

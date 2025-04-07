@@ -66,7 +66,7 @@ This code will error out because you do not have `documentMentions`, `DocumentMe
 Add the `onSuggestionChanged` code to your widget:
 
 ```dart
-void onSuggestionChanged(MentionSyntax? syntax, String? fullSearchString) {
+void onSuggestionChanged(SuggestionObject suggestion) {
     // You can do what you want here.
     // Syntax and fullSearchString will be valid when you are currently mentioning.
     // It will be invalid when not mentioning.
@@ -354,15 +354,17 @@ MarkdownBody(
 
 Several functions exist on the `MentionTextEditingController`, here is a table of the functions:
 
-| Function           | Description                                                                        |
-| :----------------- | :--------------------------------------------------------------------------------- |
-| `setMarkupText`    | Initialize a textfield with computer-readable syntax-containing(optional) raw text |
-| `getSearchText`    | Get the text used to search for a mention when mentioning is active.               |
-| `getSearchSyntax`  | Get the syntax used for the current mention and search                             |
-| `getMarkupText`    | Get the raw computer-readable syntax-containing text                               |
-| `insertMention`    | Insert a mention in the currently typing mention                                   |
-| `isMentioning`     | Check if we are currently mentioning                                               |
-| `cancelMentioning` | Cancel the current mentioning, if we are mentioning                                |
+| Function                   | Description                                                                        |
+|:---------------------------|:-----------------------------------------------------------------------------------|
+| `setMarkupText`            | Initialize a TextField with computer-readable syntax-containing(optional) raw text |
+| `getSearchText`            | Get the text used to search for a mention when mentioning is active.               |
+| `getSearchSyntax`          | Get the syntax used for the current mention and search                             |
+| `getMarkupText`            | Get the raw computer-readable syntax-containing text                               |
+| `insertMention`            | Insert a mention in the currently typing mention                                   |
+| `isMentioning`             | Check if we are currently mentioning                                               |
+| `cancelMentioning`         | Cancel the current mentioning, if we are mentioning                                |
+| `addSuggestionListener`    | Adds listener to listen suggestions changes                                        |
+| `removeSuggestionListener` | Remove listener that listens suggestions changes                                   |
 
 
 ## 👷 Contributing
